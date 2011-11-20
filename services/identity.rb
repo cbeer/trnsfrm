@@ -6,7 +6,7 @@ class Trnsfrm::Identity < Trnsfrm::Service
   end
 
   def transform
-    original 
+    original
   end
 end
 

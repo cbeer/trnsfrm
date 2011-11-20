@@ -1,9 +1,14 @@
 class Trnsfrm::App < Sinatra::Base
+
+  ##
+  # Register a transformation service
+  #
   def self.service svc
     self.registry << svc 
 
     transformer = lambda do
       ppath = stash_payload(params[:location])
+      LockIt::Dir.new(ppath.path).lock
       svc.transform!(ppath, self)
 
       redirect "/retrieve/#{Pairtree::Path.path_to_id(ppath.path.gsub(self.class.pairtree.root, ''))}"
@@ -15,6 +20,7 @@ class Trnsfrm::App < Sinatra::Base
     get "/retrieve/:id" do
       id = params[:id]
       ppath = find_payload(id)
+      LockIt::Dir.new(ppath.path).unlock rescue nil
 
       status 300
 
@@ -49,26 +55,45 @@ class Trnsfrm::App < Sinatra::Base
     end
   end
 
-  def self.registry
-    @registry ||= []
-  end
-
-  def self.pairtree
-    @pairtree ||= Pairtree.at(File.expand_path('data'), :prefix => 'trnsfrm:', :create => true)
-  end
-
   get "/" do
     "ok"
   end
 
+
+  ##
+  # Registry of transformation services
+  def self.registry
+    @registry ||= []
+  end
+
+  ##
+  # Pairtree datastore
+  #
+  # @return [Pairtree::Root]
+  def self.pairtree
+    @pairtree ||= Pairtree.at(File.expand_path('data'), :prefix => 'trnsfrm:', :create => true)
+  end
+
+  ##
+  # Create/get a pairtree node for 'id'
+  #
+  # @param [String] id
   def payload_path id
     self.class.pairtree.mk("trnsfrm:" + id)
   end
 
+  ##
+  # Hash method to transform a file
+  #
+  # @return [Digest]
   def payload_id file
     Digest::MD5.file(file)
   end
 
+  ##
+  # Stash the original file in a Pairtree node
+  #
+  # @params [File, IO]
   def stash_payload location 
     io = Kernel.open(location)
 
@@ -110,40 +135,41 @@ class Trnsfrm::App < Sinatra::Base
     ppath
   end
 
+  ##
+  # Retrieve a file out of the pairtree node
   def find_payload id, fname = 'ORIGINAL'
     ppath = payload_path(id)
   end
 
-helpers do
-  # Construct a link to +url_fragment+, which should be given relative to
-  # the base of this Sinatra app.  The mode should be either
-  # <code>:path_only</code>, which will generate an absolute path within
-  # the current domain (the default), or <code>:full_url</code>, which will
-  # include the site name and port number.  The latter is typically necessary
-  # for links in RSS feeds.  Example usage:
-  #
-  #   link_to "/foo" # Returns "http://example.com/myapp/foo"
-  #
-  #--
-  # Thanks to cypher23 on #mephisto and the folks on #rack for pointing me
-  # in the right direction.
-  def link_to url_fragment, mode=:path_only
-    case mode
-    when :path_only
-      base = request.script_name
-    when :full_url
-      if (request.scheme == 'http' && request.port == 80 ||
-          request.scheme == 'https' && request.port == 443)
-        port = ""
+  helpers do
+    # Construct a link to +url_fragment+, which should be given relative to
+    # the base of this Sinatra app.  The mode should be either
+    # <code>:path_only</code>, which will generate an absolute path within
+    # the current domain (the default), or <code>:full_url</code>, which will
+    # include the site name and port number.  The latter is typically necessary
+    # for links in RSS feeds.  Example usage:
+    #
+    #   link_to "/foo" # Returns "http://example.com/myapp/foo"
+    #
+    #--
+    # Thanks to cypher23 on #mephisto and the folks on #rack for pointing me
+    # in the right direction.
+    def link_to url_fragment, mode=:path_only
+      case mode
+      when :path_only
+        base = request.script_name
+      when :full_url
+        if (request.scheme == 'http' && request.port == 80 ||
+            request.scheme == 'https' && request.port == 443)
+          port = ""
+        else
+          port = ":#{request.port}"
+        end
+        base = "#{request.scheme}://#{request.host}#{port}#{request.script_name}"
       else
-        port = ":#{request.port}"
+        raise "Unknown script_url mode #{mode}"
       end
-      base = "#{request.scheme}://#{request.host}#{port}#{request.script_name}"
-    else
-      raise "Unknown script_url mode #{mode}"
+      "#{base}#{url_fragment}"
     end
-    "#{base}#{url_fragment}"
   end
-end
-  
 end

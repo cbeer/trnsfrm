@@ -6,6 +6,7 @@ require 'digest/md5'
 require 'fileutils'
 require 'pairtree'
 require 'checkm'
+require 'lockit'
 
 services_root = File.expand_path('../../', __FILE__)
 $:.unshift services_root if !$:.include?(services_root)
