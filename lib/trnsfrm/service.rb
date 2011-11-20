@@ -3,7 +3,16 @@ class Trnsfrm::Service
     raise NotImplementedError
   end
 
-  def self.transform *args
-    self.new(*args).transform
+  def self.transform! ppath, app
+    self.new(ppath, app).transform
+  end
+
+  def initialize ppath, app
+    @ppath = ppath
+    @app = app
+  end
+
+  def original
+    File.open(File.expand_path("ORIGINAL", @ppath))
   end
 end

@@ -5,12 +5,8 @@ class Trnsfrm::Identity < Trnsfrm::Service
     "identity"
   end
 
-  def initialize(payload, app)
-    @payload = payload
-  end
-
   def transform
-    payload
+    original 
   end
 end
 
