@@ -66,7 +66,7 @@ class Trnsfrm::App < Sinatra::Base
   end
 
   def payload_id file
-    Digest::MD5.file(file).to_s
+    Digest::MD5.file(file)
   end
 
   def stash_payload location 
@@ -83,7 +83,8 @@ class Trnsfrm::App < Sinatra::Base
       end rescue EOFError
     end
 
-    ppath = payload_path(payload_id(file))
+    hash = payload_id(file)
+    ppath = payload_path(hash.to_s)
 
     return ppath if File.exists? File.expand_path('ORIGINAL', ppath)
 
@@ -99,6 +100,11 @@ class Trnsfrm::App < Sinatra::Base
       when Tempfile
         FileUtils.mv file.path, File.expand_path('ORIGINAL')
       end
+
+      checkm = Checkm::Manifest.parse('#%fields | SourceFileOrURL | Alg | Digest | Length | ModTime | TargetFileOrURL | Transformer')
+      checkm = checkm.add File.expand_path('ORIGINAL').gsub(ppath.path + "/", '')
+
+      File.open('manifest.txt', 'w') { |f| f.write checkm.to_s }
     end
 
     ppath
