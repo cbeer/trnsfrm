@@ -21,7 +21,7 @@ class Trnsfrm::App < Sinatra::Base
   end
 
   def parse_payload params
-    File.open(params[:location])
+    Kernel.open(params[:location])
     # location
     # multipart?
   end

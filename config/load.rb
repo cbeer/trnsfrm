@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'sinatra'
+require 'open-uri'
 
 services_root = File.expand_path('../../', __FILE__)
 $:.unshift services_root if !$:.include?(services_root)
