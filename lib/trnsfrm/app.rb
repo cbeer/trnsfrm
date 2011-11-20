@@ -3,10 +3,12 @@ class Trnsfrm::App < Sinatra::Base
     self.registry << svc 
 
     post "/transform/#{svc.name}" do
-      payload = parse_payload(params, self)
+      payload = parse_payload(params)
+
+      transform = svc.transform(payload, self)
 
       status 200
-      svc.name
+      transform
     end
   end
 
@@ -18,10 +20,9 @@ class Trnsfrm::App < Sinatra::Base
     "ok"
   end
 
-  def parse_payload params, request
+  def parse_payload params
+    File.open(params[:location])
     # location
     # multipart?
   end
 end
-
-Dir["#{File.dirname(__FILE__)}/../../services/**/*.rb"].each { |service| load service }
