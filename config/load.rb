@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'sinatra'
+require 'builder'
 require 'open-uri'
 require 'digest/md5'
 require 'fileutils'
