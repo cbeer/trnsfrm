@@ -101,10 +101,10 @@ class Trnsfrm::App < Sinatra::Base
         FileUtils.mv file.path, File.expand_path('ORIGINAL')
       end
 
-      checkm = Checkm::Manifest.parse('#%fields | SourceFileOrURL | Alg | Digest | Length | ModTime | TargetFileOrURL | Transformer')
-      checkm = checkm.add File.expand_path('ORIGINAL').gsub(ppath.path + "/", '')
-
-      File.open('manifest.txt', 'w') { |f| f.write checkm.to_s }
+      FileUtils.touch('manifest.txt')
+      checkm = Checkm::Manifest.new(File.new('manifest.txt'), :fields => Checkm::Manifest::BASE_FIELDS + [:transformer])
+      checkm.add 'ORIGINAL', :alg => 'md5', :digest => hash.to_s, :transformer => 'original'
+      checkm.save
     end
 
     ppath
