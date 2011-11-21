@@ -51,10 +51,20 @@ class Trnsfrm::App < Sinatra::Base
 
     get "/retrieve/:id/:fname" do
       id = params[:id]
-      payload = find_payload(id)
+      ppath = find_payload(id)
 
-      status 200
-      File.open(File.expand_path(params[:fname], payload.path))
+      file = File.expand_path(params[:fname], ppath.path)
+
+      if File.exists? file
+        status 200
+        File.open(file)
+      else
+        Process.detach(fork{
+          svc.transform!(ppath, self)
+        })
+
+        redirect "/retrieve/#{Pairtree::Path.path_to_id(ppath.path.gsub(self.class.pairtree.root, ''))}"
+      end
     end
   end
 
