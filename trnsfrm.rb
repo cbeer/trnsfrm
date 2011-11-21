@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'bundler'
+Bundler.setup
 require File.expand_path('../config/load', __FILE__)
 
 Dir[File.expand_path("../services", __FILE__) + "/**/*.rb"].each { |service| load service }
