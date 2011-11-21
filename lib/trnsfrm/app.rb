@@ -25,8 +25,9 @@ class Trnsfrm::App < Sinatra::Base
       ppath = find_payload(id)
       LockIt::Dir.new(ppath.path).unlock rescue nil
 
-      status 300
+      checkm = Checkm::Manifest.new(File.new(File.expand_path('manifest.txt', ppath)))
 
+      status 300
       builder do |xml|
         xml.instruct!
 
@@ -41,9 +42,8 @@ class Trnsfrm::App < Sinatra::Base
           entry.published Time.now.strftime("%Y-%m-%dT%H:%M:%S%z")
           entry.updated ppath.entries.map { |x| File.new(File.expand_path(x, ppath)).mtime }.sort.last.strftime("%Y-%m-%dT%H:%M:%S%z")
 
-          
-          ppath.each do |x|
-            entry.link :rel => "http://www.openarchives.org/ore/terms/aggregates", :href => link_to("/retrieve/#{id}/#{x}", :full_url), :title => "", :type => "application/octet-stream"
+          checkm.entries.select { |x| params[:filter].nil? || x.transformer == params[:filter] }.each do |x|
+            entry.link :rel => "http://www.openarchives.org/ore/terms/aggregates", :href => link_to("/retrieve/#{id}/#{x.sourcefileorurl}", :full_url), :title => x.transformer, :type => "application/octet-stream"
           end
         end
       end
