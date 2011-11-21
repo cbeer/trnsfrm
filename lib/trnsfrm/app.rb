@@ -87,12 +87,16 @@ class Trnsfrm::App < Sinatra::Base
     @pairtree ||= Pairtree.at(File.expand_path('data'), :prefix => 'trnsfrm:', :create => true)
   end
 
+  def pairtree
+    self.class.pairtree
+  end
+
   ##
   # Create/get a pairtree node for 'id'
   #
   # @param [String] id
   def payload_path id
-    self.class.pairtree.mk("trnsfrm:" + id)
+    self.pairtree.mk("trnsfrm:" + id)
   end
 
   ##
