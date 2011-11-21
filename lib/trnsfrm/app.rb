@@ -9,7 +9,10 @@ class Trnsfrm::App < Sinatra::Base
     transformer = lambda do
       ppath = stash_payload(params[:location])
       LockIt::Dir.new(ppath.path).lock
-      svc.transform!(ppath, self)
+      
+      Process.detach(fork{
+        svc.transform!(ppath, self)
+      })
 
       redirect "/retrieve/#{Pairtree::Path.path_to_id(ppath.path.gsub(self.class.pairtree.root, ''))}"
     end
